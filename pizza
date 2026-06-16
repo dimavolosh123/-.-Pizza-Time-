@@ -1,0 +1,127 @@
+from typing import List
+
+# 0. Сущность "UI Разделитель"
+class UI:
+    @staticmethod
+    def sep(length=50):
+        print("-" * length)
+
+# 1. Сущность "Пицца"
+class Pizza:
+    def __init__(self, name: str):
+        self.__name = name  # Инкапсуляция: скрытое поле
+
+    @property
+    def name(self) -> str:
+        return self.__name
+
+
+# 2. Сущность "Заказ"
+class Order:
+    def __init__(self, order_id: int, customer: 'User', pizza: Pizza):
+        self.__order_id = order_id
+        self.__customer = customer
+        self.__ordered_pizza = pizza
+        self.is_ready = False  # Статус готовности заказа
+
+    @property
+    def order_id(self) -> int:
+        return self.__order_id
+
+    @property
+    def customer(self) -> 'User':
+        return self.__customer
+
+    @property
+    def ordered_pizza(self) -> Pizza:
+        return self.__ordered_pizza
+
+
+# 3. Сущность "Пользователь"
+class User:
+    def __init__(self, name: str):
+        self.__name = name
+
+    @property
+    def name(self) -> str:
+        return self.__name
+
+    # Метод, когда пользователь делает заказ
+    def order_pizza(self, pizzeria: 'Pizzeria', pizza_name: str):
+        print(f"[Клиент] {self.__name} пришел в пиццерию и хочет заказ '{pizza_name}'.")
+        pizzeria.take_order(self, pizza_name)
+
+    # Метод для оповещения пользователя (то самое "высвечивание имени на табло")
+    def notification(self, order: Order):
+        print(f"[Табло] >> Оповещение для {self.__name}: Ваш заказ №{order.order_id} ({order.ordered_pizza.name}) готов! <<")
+        self.__take_pizza(order)
+
+    # Пользователь сам забирает пиццу
+    def __take_pizza(self, order: Order):
+        print(f"[Клиент] {self.__name}: Отлично! Забираю свою пиццу '{order.ordered_pizza.name}'. Спасибо!")
+
+
+# 4. Сущность "Пиццерия"
+class Pizzeria:
+    def __init__(self, name: str):
+        self.__name = name
+        self.__orders_pool: List[Order] = []  # Список для хранения заказов
+        self.__next_order_id = 1
+
+    # Прием заказа от пользователя
+    def take_order(self, customer: User, pizza_name: str):
+        pizza = Pizza(pizza_name)
+        new_order = Order(self.__next_order_id, customer, pizza)
+        self.__orders_pool.append(new_order)
+
+        print(f"[Пиццерия {self.__name}] Заказ №{self.__next_order_id} на пиццу '{pizza_name}' принят от {customer.name}.")
+        self.__next_order_id += 1
+
+        # Сразу запускаем готовку в рамках консольной демонстрации
+        self.__cook_pizza(new_order)
+
+    # Процесс готовки
+    def __cook_pizza(self, order: Order):
+        print(f"[Пиццерия {self.__name}] Повар начал готовить пиццу '{order.ordered_pizza.name}' для заказа №{order.order_id}...")
+        
+        # Меняем статус
+        order.is_ready = True 
+        print(f"[Пиццерия {self.__name}] Пицца '{order.ordered_pizza.name}' готова.")
+        
+        # Вызываем оповещение клиента через табло
+        self.__notify_customer(order)
+
+    # Оповещение клиента
+    def __notify_customer(self, order: Order):
+        order.customer.notification(order)
+
+
+# Демонстрация работы программы
+if __name__ == "__main__":
+
+    sep = UI.sep
+
+    print("СИМУЛЯЦИЯ РАБОТЫ ПИЦЦЕРИИ")
+    print()
+
+    # Создаем объект пиццерии
+    my_pizzeria = Pizzeria("Вкусная пицца")
+
+    # Создаем пользователей
+    client1 = User("Анар")
+    client2 = User("Петя")
+    client3 = User("Гоша")
+    client4 = User("Тарас")
+
+    # Пользователи делают заказы
+    client1.order_pizza(my_pizzeria, "Пепперони")
+    sep() # Разделитель между заказами
+
+    client2.order_pizza(my_pizzeria, "Четыре сыра")
+    sep() 
+
+    client3.order_pizza(my_pizzeria, "Пепперони")
+    sep() 
+
+    client4.order_pizza(my_pizzeria, "Ветчина и сыр")
+    sep() 
